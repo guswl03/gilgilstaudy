@@ -46,16 +46,16 @@ Wireshark에서 sender(`172.30.1.17`)가 외부 주소(`8.8.8.8`)로 보내는 I
 
 ![Wireshark ICMP 패킷 확인](docs/images/wireshark-icmp.png)
 
-Attacker와 Target 환경의 시연 영상을 각각 준비했습니다.
-
-![시연 영상 파일 확인](docs/images/demo-videos.png)
-
 ## 시연 영상
 
 ### Attacker
 
-![](attacker.mp4)
+![Attacker 시연 미리보기](docs/images/attacker-preview.gif)
+
+[Attacker 원본 MP4 보기](attacker.mp4)
 
 ### Target
 
-![](target.mp4)
+![Target 시연 미리보기](docs/images/target-preview.gif)
+
+[Target 원본 MP4 보기](target.mp4)
