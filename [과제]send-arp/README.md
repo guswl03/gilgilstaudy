@@ -15,13 +15,6 @@ sudo apt update
 sudo apt install g++ libpcap-dev
 ```
 
-## 빌드
-
-```bash
-cd "[과제]send-arp"
-make
-```
-
 ## 실행
 
 ```bash
