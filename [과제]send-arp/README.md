@@ -50,12 +50,8 @@ Wireshark에서 sender(`172.30.1.17`)가 외부 주소(`8.8.8.8`)로 보내는 I
 
 ### Attacker
 
-[![Attacker 시연 영상 재생](docs/images/attacker-preview.gif)](https://raw.githubusercontent.com/guswl03/gilgilstaudy/main/%5B%EA%B3%BC%EC%A0%9C%5Dsend-arp/attacker.mp4)
-
-[Attacker 원본 MP4 바로 재생](https://raw.githubusercontent.com/guswl03/gilgilstaudy/main/%5B%EA%B3%BC%EC%A0%9C%5Dsend-arp/attacker.mp4)
+https://github.com/user-attachments/assets/5deeb1b8-e269-45ae-8835-a4db14010cee
 
 ### Target
 
-[![Target 시연 영상 재생](docs/images/target-preview.gif)](https://raw.githubusercontent.com/guswl03/gilgilstaudy/main/%5B%EA%B3%BC%EC%A0%9C%5Dsend-arp/target.mp4)
-
-[Target 원본 MP4 바로 재생](https://raw.githubusercontent.com/guswl03/gilgilstaudy/main/%5B%EA%B3%BC%EC%A0%9C%5Dsend-arp/target.mp4)
+https://github.com/user-attachments/assets/486ac9b0-17c9-4492-ac79-7808e7187a8c
