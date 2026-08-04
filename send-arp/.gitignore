@@ -1,0 +1,5 @@
+src/build/
+src/.qtcreator/
+src/send-arp
+*.o
+*.user
