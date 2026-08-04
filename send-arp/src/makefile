@@ -1,20 +1,23 @@
-LDLIBS=-lpcap
+CXXFLAGS += -std=c++11 -Wall -Wextra
+LDLIBS += -lpcap
 
-all: send-arp-test
+TARGET := send-arp
+OBJECTS := main.o arphdr.o arpmanager.o ethhdr.o ip.o mac.o netinfo.o
 
+.PHONY: all clean
 
-main.o: mac.h ip.h ethhdr.h arphdr.h main.cpp
+all: $(TARGET)
 
-arphdr.o: mac.h ip.h arphdr.h arphdr.cpp
+$(TARGET): $(OBJECTS)
+	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-ethhdr.o: mac.h ethhdr.h ethhdr.cpp
-
-ip.o: ip.h ip.cpp
-
-mac.o : mac.h mac.cpp
-
-send-arp-test: main.o arphdr.o ethhdr.o ip.o mac.o
-	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
+main.o: main.cpp arpmanager.h netinfo.h ethhdr.h arphdr.h mac.h ip.h
+arphdr.o: arphdr.cpp arphdr.h mac.h ip.h
+arpmanager.o: arpmanager.cpp arpmanager.h ethhdr.h arphdr.h mac.h ip.h
+ethhdr.o: ethhdr.cpp ethhdr.h mac.h
+ip.o: ip.cpp ip.h
+mac.o: mac.cpp mac.h
+netinfo.o: netinfo.cpp netinfo.h mac.h ip.h
 
 clean:
-	rm -f send-arp-test *.o
+	$(RM) $(TARGET) $(OBJECTS)

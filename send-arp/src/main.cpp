@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstdlib>
 #include <pcap.h>
 #include "ethhdr.h"
 #include "arphdr.h"
@@ -95,4 +96,5 @@ int main(int argc, char* argv[]) {
     }
 
 	pcap_close(pcap);
+	return EXIT_SUCCESS;
 }
