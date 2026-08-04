@@ -40,6 +40,16 @@ sudo ./send-arp eth0 172.30.1.17 172.30.1.254
 sudo ./send-arp eth0 172.30.1.17 172.30.1.254 172.30.1.18 172.30.1.254
 ```
 
+## 실행 결과
+
+Wireshark에서 sender(`172.30.1.17`)가 외부 주소(`8.8.8.8`)로 보내는 ICMP 패킷을 확인했습니다.
+
+![Wireshark ICMP 패킷 확인](docs/images/wireshark-icmp.png)
+
+Attacker와 Target 환경의 시연 영상을 각각 준비했습니다.
+
+![시연 영상 파일 확인](docs/images/demo-videos.png)
+
 ## 시연 영상
 
 ### Attacker
