@@ -76,17 +76,17 @@ int main(int argc, char* argv[]) {
             fprintf(stderr, "failed to get sender MAC\n");
             continue;
         }
-        if (!sendInfectPacket(
+        if (!sendInfectPacket( //검증을 안함
                 pcap,
                 attackerMac,
                 senderMac,
                 senderIp,
                 targetIp)) {
-            fprintf(stderr, "failed to infect sender\n");
+            fprintf(stderr, "failed to infect sender\n"); 
             continue;
         }
 
-        printf("infection packet sent\n");
+        printf("infection packet sent\n"); //반복이없이 끝남
 
 
         std::string senderMacString =
