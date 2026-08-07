@@ -1,0 +1,148 @@
+# send-arp 과제 코드 리뷰
+
+- 대상 저장소: https://github.com/guswl03/gilgilstaudy/tree/main/%5B%EA%B3%BC%EC%A0%9C%5Dsend-arp
+- 과제 명세: https://gitlab.com/gilgil/sns/-/wikis/about-arp/report-send-arp
+
+## 목차
+
+1. [개요](#1-개요)
+2. [코드 구조](#2-코드-구조)
+3. [동작 흐름](#3-동작-흐름)
+4. [과제 요구사항 대조표](#4-과제-요구사항-대조표)
+5. [실패 원인 분석](#5-실패-원인-분석)
+6. [상세 코드 리뷰](#6-상세-코드-리뷰)
+7. [개선 제안](#7-개선-제안)
+
+---
+
+## 1. 개요
+
+이 프로젝트는 `pcap`을 이용해 ARP 스푸핑(감염) 패킷을 전송하여 Sender(Victim)의 ARP 테이블을 변조하는 `send-arp` 프로그램이다. libnet 같은 외부 패킷 라이브러리 대신 직접 정의한 `Ip`, `Mac`, `EthHdr`, `ArpHdr` 구조체를 사용하며, 공격자의 MAC/IP는 인터페이스 이름으로부터 자동으로 알아내고, sender의 MAC은 실제 ARP request/reply를 통해 런타임에 알아낸다.
+
+전체적으로 헤더 패킹, 바이트오더 처리, ARP 스푸핑 패킷 구성 로직 자체는 정확하다. 다만 **감염 패킷을 단 한 번만 전송하고 종료하는 구조** 때문에 실제 환경에서는 감염이 오래 유지되지 못하고 원상 복구되는 문제가 있다 (5장에서 상세 설명).
+
+## 2. 코드 구조
+
+```
+include/  ip.h  mac.h  ethhdr.h  arphdr.h  netinfo.h  arpmanager.h   → 자료구조/함수 선언
+src/      ip.cpp  mac.cpp  ethhdr.cpp  arphdr.cpp  netinfo.cpp
+          arpmanager.cpp  main.cpp                                    → 구현
+Makefile                                                               → 빌드 스크립트
+```
+
+| 파일 | 역할 |
+|---|---|
+| `ip.h/cpp`, `mac.h/cpp` | IP/MAC 주소의 문자열 ↔ 바이너리 변환, 비교 연산자 등 유틸리티 |
+| `ethhdr.h`, `arphdr.h` | `#pragma pack(push,1)`로 패딩 없이 정의한 Ethernet/ARP 헤더 구조체 |
+| `netinfo.cpp` | `ioctl(SIOCGIFHWADDR / SIOCGIFADDR)`로 공격자 자신의 MAC/IP를 인터페이스 이름만으로 조회 |
+| `arpmanager.cpp` | sender MAC 조회(`getSenderMac`)와 감염 패킷 전송(`sendInfectPacket`) 로직 |
+| `main.cpp` | 인자 파싱, pair 순회, 위 함수들 호출 |
+
+## 3. 동작 흐름
+
+```
+1) argv 파싱: <interface> <sender ip> <target ip> [<sender ip2> <target ip2> ...]
+2) pcap_open_live(dev, BUFSIZ, 1, 1, errbuf)
+3) netinfo.cpp → 공격자 자신의 MAC/IP 획득
+4) (sender, target) pair마다:
+     a. arpmanager::getSenderMac()
+        - attacker → broadcast로 정상 ARP request(누가 senderIp를 갖고 있나?) 전송
+        - pcap_next_ex로 최대 5초간 폴링, op=Reply && sip=senderIp인 응답에서 sender MAC 추출
+     b. arpmanager::sendInfectPacket()
+        - "targetIp는 내(attacker) MAC이다"라고 주장하는 위조 ARP reply를
+          sender에게 유니캐스트로 1회 전송
+5) pcap_close, 종료
+```
+
+핵심 감염 패킷 구성 (`src/arpmanager.cpp`):
+
+```cpp
+packet.eth_.dmac_ = senderMac;      // sender에게 직접 전송
+packet.eth_.smac_ = attackerMac;
+packet.eth_.type_ = htons(EthHdr::Arp);
+
+packet.arp_.op_   = htons(ArpHdr::Reply);
+packet.arp_.smac_ = attackerMac;
+packet.arp_.sip_  = htonl(targetIp);  // "나는 target이다" 라고 주장
+packet.arp_.tmac_ = senderMac;
+packet.arp_.tip_  = htonl(senderIp);
+```
+
+이더넷 목적지를 sender로 명확히 지정한 유니캐스트 reply이며, ARP 스푸핑의 표준적인 형태를 정확히 따르고 있다.
+
+## 4. 과제 요구사항 대조표
+
+GitLab 위키(`about-arp/report-send-arp`) 원문 기준:
+
+| 요구사항 | 충족 여부 | 비고 |
+|---|:---:|---|
+| Sender(Victim)의 ARP table 변조 | ✅ | |
+| 여러 (sender, target) 조합 처리 | ✅ | `argc` 루프 |
+| ARP header 구조를 이해하고 직접 구성 | ✅ | |
+| `pcap_sendpacket`으로 user-defined buffer 전송 | ✅ | |
+| interface 이름으로 attacker MAC 자동 획득 | ✅ | `netinfo.cpp` |
+| sender MAC은 정상 ARP request/reply로 프로그램이 자동 획득 (하드코딩 금지) | ✅ | `getSenderMac` |
+| libnet 대신 직접 만든 구조체 사용 | ✅ | |
+| `pcap_open_live(dev, BUFSIZ, 1, 1, errbuf)` | ✅ | 위키 지침과 정확히 일치 |
+| 프로젝트 이름 `send-arp` (send-arp-test 금지) | ✅ | Makefile `TARGET := send-arp` |
+| git에 소스 + Makefile + 시연 영상 함께 업로드 | ✅ | `attacker.mp4`, `target.mp4`, `Makefile` 존재 |
+| `arp -an`으로 변조 확인 | ⚠️ | 프로그램 자체는 검증 로직이 없음 (사용자가 수동 확인해야 함) |
+
+**명세서 자체가 요구하는 범위(1회 감염 후 `arp -an`으로 확인)만 놓고 보면 구조적으로 크게 벗어난 부분은 없다.** 문제는 명세 밖의 "실제 환경에서 지속적으로 동작하는가"이다.
+
+## 5. 실패 원인 분석
+
+가장 유력한 원인은 **감염 패킷을 프로그램당 단 1회만 전송하고 즉시 종료한다는 구조적 한계**다.
+
+```cpp
+// main.cpp
+if (!sendInfectPacket(pcap, attackerMac, senderMac, senderIp, targetIp)) {
+    fprintf(stderr, "failed to infect sender\n");
+    continue;
+}
+printf("infection packet sent\n");   // 성공 여부를 검증하지 않고 무조건 출력
+```
+
+대부분의 OS는 ARP 캐시 엔트리가 REACHABLE 상태로 일정 시간(리눅스 기본값 기준 대략 15~45초, `net.ipv4.neigh.default.base_reachable_time` 관련 랜덤 구간)이 지나면 STALE로 전이되고, 이후 해당 목적지로 트래픽이 나갈 때 커널이 **재확인(NUD PROBE)**을 수행한다. 이때 커널은 먼저 캐시에 있는 현재 MAC(=공격자 MAC)으로 유니캐스트 ARP request를 보내는데, 이 프로그램은 이미 종료된 상태라 응답할 수 없다. 결국 브로드캐스트 재요청 → 진짜 게이트웨이가 응답 → 캐시가 원래대로 복구된다.
+
+즉:
+
+- 감염 직후 짧게 ping 몇 번 치는 정도의 데모는 성공적으로 캡처될 수 있다 (README의 영상들이 이 경우로 보인다).
+- 하지만 시간이 조금만 지나거나 sender가 지속적으로 통신 중이면 캐시가 자동으로 원상 복구되어 감염이 풀린다.
+- 게다가 전송 성공 여부/캐시 변조 여부를 검증하거나 재시도하는 로직이 전혀 없어서, 패킷이 유실되거나(특히 무선 환경) OS가 응답을 무시해도 프로그램은 그대로 "성공"처럼 로그를 출력한다.
+
+정리하면, **"한 번 보내고 끝" 구조가 위키가 권장하는 실제 테스트 환경(물리적으로 분리된 호스트, 스마트폰/노트북, 무선 네트워크)에서 감염이 오래 유지되지 못하고 실패로 이어졌을 가능성이 가장 높다.**
+
+## 6. 상세 코드 리뷰
+
+- **`getSenderMac`의 응답 필터가 느슨함** (`src/arpmanager.cpp`)
+  ```cpp
+  if (reply->eth_.type() != EthHdr::Arp) continue;
+  if (reply->arp_.op() != ArpHdr::Reply) continue;
+  if (!(reply->arp_.sip() == senderIp)) continue;
+  ```
+  `sip()`만 검사하고 `tip()`(내 IP로 온 응답인지)이나 `tmac()`은 검사하지 않는다. 네트워크에 트래픽이 많으면 관련 없는 ARP reply를 sender MAC으로 잘못 채택할 여지가 있다.
+
+- **busy-wait 폴링**: `getSenderMac`의 `while(true)` 루프가 sleep 없이 `pcap_next_ex`를 계속 호출한다. `pcap_open_live`의 timeout이 1ms로 짧게 열려 있어 치명적이진 않지만 불필요하게 CPU를 점유한다.
+
+- **주석이 알아보기 어렵게 깨져 있음** (`src/main.cpp`)
+  ```cpp
+  //BUT. dajungjjohap
+  //ai wal hardcoding out!
+  // sender . target johap read banbokmun
+  ```
+  한글이 로마자로 깨진 것으로 보이는 주석들이 남아 있어 코드 이해에 방해가 된다. 정리하거나 삭제를 권장한다.
+
+- **감염 후 원상복구(cleanup) 없음**: `Ctrl+C`나 정상 종료 시 sender의 ARP 캐시를 원래 정보로 되돌리는 처리가 없다. 과제 필수 요건은 아니지만, 테스트 후 sender가 통신 장애를 겪을 수 있으므로 실무적으로는 권장되는 처리다.
+
+- **패킷 크기(42바이트)가 이더넷 최소 프레임(60바이트)보다 작음**: 대부분의 리눅스 드라이버가 자동 패딩해주므로 실사용에는 대체로 문제가 없지만, 일부 환경/드라이버에서는 패킷이 드롭될 수 있다.
+
+- **긍정적인 부분**: 헤더 패킹(`#pragma pack`), 바이트오더 변환(`htons`/`ntohl`), `pcap_open_live` 파라미터, 프로젝트 이름 규칙 등 위키에서 명시적으로 강조한 디테일들은 모두 정확히 지켜졌다.
+
+## 7. 개선 제안 (우선순위)
+
+1. **주기적 재감염 루프 추가**: `Ctrl+C`로 종료할 때까지 1~2초 간격으로 `sendInfectPacket`을 반복 전송. 실제 ARP 스푸핑 도구(예: `arpspoof`)가 공통적으로 채택하는 방식이며, 5장에서 설명한 캐시 타임아웃 문제를 근본적으로 해결한다.
+2. **전송 재시도/결과 로깅 개선**: 최소한 몇 차례 재전송하거나, 전송 실패와 성공을 명확히 구분해 로그로 남긴다.
+3. **ARP reply 필터에 `tip()`/`tmac()` 검증 추가**: 오탐 가능성을 줄인다.
+4. **종료 시그널 핸들러로 ARP 캐시 복원**: 실제 target/gateway의 정상 정보를 담은 ARP reply를 한 번 더 보내 sender를 정상 상태로 돌려준다.
+5. **깨진 주석 정리**: 의미 전달이 안 되는 주석 삭제 및 필요한 부분만 명확한 한글/영어로 재작성.
