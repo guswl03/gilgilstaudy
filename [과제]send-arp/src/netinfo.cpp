@@ -10,19 +10,19 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-bool getAttackerInfo(const char* dev, Mac& mac, Ip& ip) {
+bool getAttackerInfo(const char* dev, Mac& mac, Ip& ip) { //내정보
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         perror("socket");
         return false;
     }
 
-    struct ifreq ifr;
+    struct ifreq ifr; //커널과 인터페이스 정보 주 받
     memset(&ifr, 0, sizeof(ifr));
     strncpy(ifr.ifr_name, dev, IFNAMSIZ - 1);
 
     //
-    if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
+    if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) { //맥주소 요청 ioctl명령
         perror("SIOCGIFHWADDR");
         close(sock);
         return false;
