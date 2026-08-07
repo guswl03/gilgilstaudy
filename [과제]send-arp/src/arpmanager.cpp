@@ -14,7 +14,7 @@ struct EthArpPacket final {
 };
 #pragma pack(pop)
 
-bool getSenderMac( //arp요청 응답으로 상대mac
+bool getSenderMac( //상mac조회
     pcap_t* pcap,
     const Mac& attackerMac,
     const Ip& attackerIp,
@@ -24,7 +24,7 @@ bool getSenderMac( //arp요청 응답으로 상대mac
     EthArpPacket request;
 
     // Ethernet 헤더
-    request.eth_.dmac_ = Mac::broadcastMac();
+    request.eth_.dmac_ = Mac::broadcastMac(); //목적지
     request.eth_.smac_ = attackerMac;
     request.eth_.type_ = htons(EthHdr::Arp);
 
@@ -51,7 +51,7 @@ bool getSenderMac( //arp요청 응답으로 상대mac
         return false;
     }
 
-    auto start = std::chrono::steady_clock::now();
+    auto start = std::chrono::steady_clock::now(); //응답기다림
 
     while (true) {
         struct pcap_pkthdr* header;
@@ -60,13 +60,13 @@ bool getSenderMac( //arp요청 응답으로 상대mac
         int res = pcap_next_ex(pcap, &header, &data);
 
         if (res == 1) {
-            if (header->caplen < sizeof(EthArpPacket))
+            if (header->caplen < sizeof(EthArpPacket)) 
                 continue;
 
             const EthArpPacket* reply =
                 reinterpret_cast<const EthArpPacket*>(data);
 
-            if (reply->eth_.type() != EthHdr::Arp)
+            if (reply->eth_.type() != EthHdr::Arp) //필요없는거 스킵스킵
                 continue;
 
             if (reply->arp_.op() != ArpHdr::Reply)
@@ -94,7 +94,7 @@ bool getSenderMac( //arp요청 응답으로 상대mac
     }
 }
 
-bool sendInfectPacket(
+bool sendInfectPacket( //공격
     pcap_t* pcap,
     const Mac& attackerMac,
     const Mac& senderMac,
