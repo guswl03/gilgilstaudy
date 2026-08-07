@@ -14,7 +14,7 @@ struct EthArpPacket final {
 };
 #pragma pack(pop)
 
-bool getSenderMac(
+bool getSenderMac( //arp요청 응답으로 상대mac
     pcap_t* pcap,
     const Mac& attackerMac,
     const Ip& attackerIp,
@@ -39,7 +39,7 @@ bool getSenderMac(
     request.arp_.tmac_ = Mac::nullMac();
     request.arp_.tip_ = htonl(senderIp);
 
-    int result = pcap_sendpacket(
+    int result = pcap_sendpacket( //위조arp
         pcap,
         reinterpret_cast<const u_char*>(&request),
         sizeof(request)
