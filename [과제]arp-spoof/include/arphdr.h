@@ -6,6 +6,7 @@
 #include "ip.h"
 
 #pragma pack(push, 1)
+// === ARP 패킷의 고정 헤더와 주소 필드를 그대로 옮긴 구조체다.
 struct ArpHdr final {
 	uint16_t hrd_;
 	uint16_t pro_;
@@ -27,10 +28,12 @@ struct ArpHdr final {
 	Mac tmac() const { return tmac_; }
 	Ip tip() const { return ntohl(tip_); }
 
+	// === Ethernet 위에서 동작하는 ARP임을 나타낸다.
 	enum: uint16_t {
 		ETHER = 1
 	};
 
+	// === ARP 요청/응답 opcode 값이다.
 	enum: uint16_t {
 		Request = 1,
 		Reply = 2

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 
+// === 문자열/정수 형태의 IPv4 주소를 다루기 쉽게 감싼 자료형이다.
 struct Ip final {
 	static const int Size = 4;
 
