@@ -65,6 +65,12 @@ Wireshark에서 sender(`172.30.1.17`)가 외부 주소(`8.8.8.8`)로 보내는 I
 
 ## 시연 영상
 
+### 개인 실습 전체 과정
+
+한 컴퓨터에서 공격자, sender, target 역할의 가상머신 3대를 구성해 진행한 전체 실습 영상입니다.
+
+https://github.com/user-attachments/assets/754a5ea7-8854-4f89-bacc-b785f1e5f67a
+
 ### Attacker
 
 https://github.com/user-attachments/assets/5deeb1b8-e269-45ae-8835-a4db14010cee
