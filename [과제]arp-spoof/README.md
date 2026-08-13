@@ -2,8 +2,6 @@
 
 ARP spoofing 프로그램 구현 과제입니다.
 
-[과제 명세](https://gitlab.com/gilgil/sns/-/wikis/arp-spoofing/report-arp-spoof)
-
 ## 요구 사항
 
 - Linux
