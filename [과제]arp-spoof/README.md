@@ -50,7 +50,7 @@ sender의 ARP 테이블에서 target(`192.168.56.103`)의 MAC 주소가 공격�
 
 한 컴퓨터에서 공격자, sender, target 역할의 가상머신 3대를 구성해 진행한 실습 영상입니다.
 
-https://github.com/user-attachments/assets/754a5ea7-8854-4f89-bacc-b785f1e5f67a
+https://github.com/user-attachments/assets/13aa1380-d003-4137-a1f5-7f8ff453156b
 
 원본 영상은 [`arp-spoof-demo.mp4`](arp-spoof-demo.mp4)로 함께 제출했습니다.
 
