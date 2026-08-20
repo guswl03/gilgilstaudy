@@ -67,6 +67,12 @@ BSSID              Beacons  ESSID
 
 종료하려면 `Ctrl+C`를 누릅니다.
 
+## 실행 결과
+
+![airodump 실행 영상](evidence/airodump-demo.gif)
+
+[▶ 전체 영상 보기](evidence/airodump-demo.mp4)
+
 ## 정리
 
 ```bash
