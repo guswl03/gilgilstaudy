@@ -73,3 +73,9 @@ BSSID              Beacons  ESSID
 sudo airmon-ng stop wlan0mon
 sudo systemctl restart NetworkManager
 ```
+
+## 실행 결과
+
+[![airodump 실행 결과](evidence/airodump-result.png)](evidence/airodump-demo.mp4)
+
+[▶ 실행 영상 보기](evidence/airodump-demo.mp4)
